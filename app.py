@@ -89,6 +89,11 @@ def alltornadoes():
 
     return render_template('alltornadoes.html')
 
+@app.route("/tornado_enso")
+def tornado_enso():
+
+    return render_template('tornado_enso.html')
+
 
 if __name__ == "__main__":
     app.run(debug=True)
