@@ -1,14 +1,64 @@
-d3.json("/data",data => {
-  d3.json('/mobile_homes', response  => {
-  createMap(data, response)
-  });
-});
+  
+function init(){
+    
+  // Grab a reference to the dropdown select element
+  var selector = d3.select("#selDataset");
+  
+  // Use the list of sample names to populate the select options
+  d3.json("/data",data => {
+    
+    years=[];
 
-function createMap(data, response) {
+    data.forEach(tornado => {
+      if(years.includes(tornado.Year)){
+      }
+      else{
+        years.push(tornado.Year);
+      }
+    });
+    //years = years.filter(function(elem, pos) {return years.indexOf(elem) == pos;});
+    // Loop through years to add "option" elements to the selector
+    //TODO: 
+    years.forEach(year => {
+      var dropdownSel = selector.append('option').text(year);
+      dropdownSel.value = year;
+      });
+  });
+
+  
+  defaultYear=2018;
+
+  d3.json("/data",data => {
+    d3.json("/mobile_homes", response  => {
+      createMap(data, response, defaultYear);
+    });
+  });
+
+};
+
+function optionChanged(year){
+
+  console.log("SelectedYear1:" +year);
+  
+  d3.json("/data",data => {
+    console.log("SelectedYear2:"+year);
+    d3.json("/mobile_homes", response  => {
+      console.log("SelectedYear3:"+year);
+      createMap(data, response, year);
+    });
+  });
+};
+
+function createMap(data, response, selectedYear) {
   // console.log(data, response)
   // var heat = ;
   // var tornadoes = ;
   // Create the tile layer that will be the background of our map
+  var container = L.DomUtil.get('map');
+  if(container != null){
+  container._leaflet_id = null;
+  };
+
   var lightmap = L.tileLayer("https://api.mapbox.com/styles/v1/mapbox/light-v9/tiles/256/{z}/{x}/{y}?access_token={accessToken}", {
     attribution: "Map data &copy; <a href=\"http://openstreetmap.org\">OpenStreetMap</a> contributors, <a href=\"http://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"http://mapbox.com\">Mapbox</a>",
     maxZoom: 12,
@@ -16,26 +66,24 @@ function createMap(data, response) {
     accessToken: API_KEY
   });
 
-  // Create a baseMaps object to hold the lightmap layer
-  // var baseMaps = {
-  //   "Light Map": lightmap
-  // };
+  // selectedYear = 2018;
 
-  selectedYear = 2018;
+  console.log("SelectedYear4:"+selectedYear);
 
   bothObj = createTornadoMarkers(data, selectedYear);
+  mobileHomesLayer = createheatlayer(response);
 
   // Create an overlayMaps object to hold the bikeStations layer
   var overlayMaps = {
-    "Mobile Homes Heat Map": createheatlayer(response),
+    "Mobile Homes Heat Map": mobileHomesLayer,
     "Tornadoes" : bothObj.torLayer
   };
 
   // Create the map object with options
   var map = L.map("map", {
-    center: [39.8283, -98.5795],
+    center: [30, -98.5795],
     zoom: 4,
-    layers: [lightmap, bothObj.torLayer]
+    layers: [lightmap, bothObj.torLayer, mobileHomesLayer]
   });
 
   // Create a layer control, pass in the baseMaps and overlayMaps. Add the layer control to the map
@@ -45,7 +93,7 @@ function createMap(data, response) {
 
   // Create a legend to display information about our map
 var info = L.control({
-  position: "bottomright"
+  position: "topleft"
 });
 
   // When the layer control is added, insert a div with the class of "legend"
@@ -60,7 +108,7 @@ updateLegend(bothObj.count, selectedYear);
 }
 
 function createTornadoMarkers(tornadoes_data, year) {
-
+  
   function filterYear(data){
     return data.Year == year;
   }
@@ -205,6 +253,8 @@ function createheatlayer(response){
   // createMap(heat)
 };
 
+init();
+
 function updateLegend(tornado_Count, yr) {
   document.querySelector(".legend").innerHTML = [
     "<p class='Year'>Year: " +yr+"</p>",
@@ -214,4 +264,8 @@ function updateLegend(tornado_Count, yr) {
     "<p class='Magnitude-f3'>Magnitude F3: " + tornado_Count.MAG_3 + "</p>",
     "<p class='Magnitude-f4'>Magnitude F4: " + tornado_Count.MAG_4 + "</p>",
   ].join("");
-}
+};
+
+
+
+
